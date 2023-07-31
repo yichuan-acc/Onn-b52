@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "string.h": "c",
+        "printk.h": "c",
+        "assert.h": "c",
+        "system_error": "c",
+        "*.s": "c",
+        "*.def": "c",
+        "bitmap.h": "c",
+        "list.h": "c",
+        "task.h": "c",
+        "types.h": "c",
+        "syscall.h": "c"
+    }
+}
