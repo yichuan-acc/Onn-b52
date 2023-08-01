@@ -101,7 +101,6 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 #   rm usb.
 
 $(BUILD)/kernel.iso : $(BUILD)/kernel.bin $(SRC)/utils/grub.cfg
-
 # 检测内核文件是否合法
 	grub-file --is-x86-multiboot2 $<
 # 创建 iso 目录
@@ -111,7 +110,7 @@ $(BUILD)/kernel.iso : $(BUILD)/kernel.bin $(SRC)/utils/grub.cfg
 # 拷贝 grub 配置文件
 	cp $(SRC)/utils/grub.cfg $(BUILD)/iso/boot/grub
 # 生成 iso 文件
-	grub-mkrescue -o --xorriso=/usr/local/xorriso-1.5.7/xorriso/xorriso $@ $(BUILD)/iso 
+	grub-mkrescue --xorriso=/usr/local/xorriso-1.5.7/xorriso/xorriso -o $@ $(BUILD)/iso 
 
 
 image: $(BUILD)/master.img

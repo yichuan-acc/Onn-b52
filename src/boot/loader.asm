@@ -201,7 +201,6 @@ read_disk:
 code_selector equ (1 << 3)
 data_selector equ (2 << 3)
 
-
 memory_base equ 0; 内存开始的位置：基地址
 
 ; 内存界限 4G / 4K - 1
