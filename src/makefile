@@ -1,7 +1,8 @@
 BUILD:=../build
 SRC:=.
 
-ENTRYPOINT:=0x10000
+MULTIBOOT2:=0X10000
+ENTRYPOINT:=$(shell python -c "print(f'0x{$(MULTIBOOT2) + 64:x}')")
 
 CFLAGS:= -m32 # 32 位的程序
 CFLAGS+= -fno-builtin	# 不需要 gcc 内置函数
@@ -26,6 +27,13 @@ $(BUILD)/%.o: $(SRC)/%.asm
 $(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
 	gcc $(CFLAGS) $(DEBUG) $(INCLUDE) -c $< -o $@
+
+LDFLAGS:= -m elf_i386 \
+		-static \
+		-Ttext $(ENTRYPOINT)\
+		--section-start=.multiboot2=$(MULTIBOOT2)
+LDFLAGS:=$(strip ${LDFLAGS})
+# strip 去空格,优雅好看
 
 $(BUILD)/kernel.bin: \
  	$(BUILD)/kernel/start.o \
@@ -55,7 +63,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/list.o 
 	
 	$(shell mkdir -p $(dir $@))
-	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)
+	ld ${LDFLAGS} $^ -o $@ 
 
 $(BUILD)/system.bin: $(BUILD)/kernel.bin
 	objcopy -O binary $< $@
@@ -90,43 +98,69 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 # 	sudo rm tmp.bin
 # 	dd if=$(BUILD)/boot/%.bin of=usb.bin bs=446 count=1 conv=notrunc
 #   sudo dd if=/dev/sdb 0f=/dev/sdb bs=512 count=1 conv=notrunc
-#   rm usb.bin
+#   rm usb.
 
-test: $(BUILD)/master.img
+$(BUILD)/kernel.iso : $(BUILD)/kernel.bin $(SRC)/utils/grub.cfg
+
+# 检测内核文件是否合法
+	grub-file --is-x86-multiboot2 $<
+# 创建 iso 目录
+	mkdir -p $(BUILD)/iso/boot/grub
+# 拷贝内核文件
+	cp $< $(BUILD)/iso/boot
+# 拷贝 grub 配置文件
+	cp $(SRC)/utils/grub.cfg $(BUILD)/iso/boot/grub
+# 生成 iso 文件
+	grub-mkrescue -o --xorriso=/usr/local/xorriso-1.5.7/xorriso/xorriso $@ $(BUILD)/iso 
+
+
+image: $(BUILD)/master.img
 
 .PHONY: clean
-clean:
+c clean:
 	rm -rf 	$(BUILD)
 
-	
-
 .PHONY:bochs
-b bochs:$(BUILD)/master.img
+b bochs: $(BUILD)/master.img
 	bochs -q -f ../bochs/bochsrc -unlock
 
-.PHONY:bochsg
-bg bochsg:$(BUILD)/master.img
+.PHONY: bochsg
+bg bochsg: $(BUILD)/master.img
 	bochs-gdb -q -f ../bochs/bochsrc.gdb -unlock
+
+.PHONY: bochsb
+bochsb: $(BUILD)/kernel.iso
+	bochs -q -f ../bochs/bochsrc.grub -unlock
 
 QEMU:= qemu-system-i386 \
 	-m 32M \
-	-boot c \
-	-drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw \
 	-audiodev pa,id=hda \
 	-machine pcspk-audiodev=hda \
 	-rtc base=localtime \
 
+QEMU_DISK:=-boot c \
+	-drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw \
+
+QEMU_CDROM:=-boot d \
+	-drive file=$(BUILD)/kernel.iso,media=cdrom \
+
+QEMU_DEBUG: -s -S
+
 .PHONY: qemu
 q qemu: $(BUILD)/master.img
-	$(QEMU)
+	$(QEMU) $(QEMU_DISK)
 
-.PHONY:qemug
+.PHONY: qemug
 qg qemug:$(BUILD)/master.img
-	$(QEMU) -s -S
+	$(QEMU) $(QEMU_DISK) $(QEMU_DEBUG)
 
+.PHONY: qemub
+qemub: $(BUILD)/kernel.iso
+	$(QEMU) $(QEMU_CDROM) 
+# $(QEMU_DEBUG)
 
 $(BUILD)/master.vmdk: $(BUILD)/master.img
 	qemu-img convert -O vmdk $< $@
 
-.PHONY:vmdk
-vmdk: $(BUILD)/master.vmdk
+.PHONY: vmdk
+v vmdk: $(BUILD)/master.vmdk

@@ -124,7 +124,7 @@ protect_mode:
     mov ebx,ards_count ; ards数量指针
 
     ; xchg bx,bx
-    jmp dword code_selector:0x10000
+    jmp dword code_selector:0x10040;入口地址10000被multiboot占用，改为10040
 
     ud2;出错
 

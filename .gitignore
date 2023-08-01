@@ -11,6 +11,7 @@
 *.gz
 *.lock
 *.vmdk
+*.log
 
 
 bochs/src
