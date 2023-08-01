@@ -22,13 +22,13 @@ void idle_thread()
 #include <onix/mutex.h>
 
 // mutex_t mutex;
-spinlock_t lock;
+lock_t lock;
 
 void init_thread()
 {
 
     // mutex_init(&mutex);
-    spin_init(&lock);
+    lock_init(&lock);
 
     set_interrupt_state(true);
 
@@ -37,12 +37,12 @@ void init_thread()
     while (true)
     {
         // mutex_lock(&mutex);
-        spin_lock(&lock);
+        lock_acquire(&lock);
 
         LOGK("init task %d....\n", counter++);
         // mutex_unlock(&mutex);
 
-        spin_unlock(&lock);
+        lock_release(&lock);
     }
 }
 
@@ -54,12 +54,12 @@ void test_thread()
     while (true)
     {
         // mutex_lock(&mutex);
-        spin_lock(&lock);
+        lock_acquire(&lock);
 
         LOGK("test task %d....\n", counter++);
         // mutex_unlock(&mutex);
 
-        spin_unlock(&lock);
+        lock_release(&lock);
         // sleep(709);
     }
 }
