@@ -55,6 +55,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/interrupt.o \
 	$(BUILD)/kernel/rtc.o \
 	$(BUILD)/kernel/memory.o \
+	$(BUILD)/kernel/keyboard.o \
 	$(BUILD)/lib/string.o \
 	$(BUILD)/lib/bitmap.o \
 	$(BUILD)/lib/vsprintf.o \

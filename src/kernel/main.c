@@ -23,6 +23,7 @@ extern void clock_init();
 extern void hang();
 extern void time_init();
 extern void rtc_init();
+extern void keyboard_init();
 extern void memory_map_init();
 extern void mapping_init();
 extern void memory_test();
@@ -186,6 +187,7 @@ void kernel_init()
     interrupt_init();
     // task_init();
     clock_init();
+    keyboard_init();
     // time_init();
     // rtc_init();
     // set_alarm(2);
